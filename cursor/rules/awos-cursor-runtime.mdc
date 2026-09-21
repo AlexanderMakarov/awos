@@ -1,0 +1,44 @@
+---
+description: Map AWOS Claude tool names to Cursor equivalents when running /awos-* commands
+alwaysApply: true
+---
+
+# AWOS on Cursor — runtime tool mapping
+
+When following prompts under `.awos/commands/` (via `.cursor/commands/awos-*.md` or `.claude/commands/awos/*`), translate Claude-oriented tool names to Cursor:
+
+| AWOS / Claude prompt says | Use in Cursor |
+|---|---|
+| `AskUserQuestion` | **Native `AskQuestion` (first choice when injected)** — see below |
+| `Agent(subagent_type=…)` | `Task(subagent_type=…)` |
+| `subagent_type="general-purpose"` | `subagent_type="generalPurpose"` |
+| Project agents under `.claude/agents/<name>.md` | Keep the kebab-case name as `subagent_type` (e.g. `python-backend`) |
+| Plugin agents `plugin-name:agent` | Only if that plugin is loaded in this Cursor session; otherwise hire a project-local agent via `/awos-hire` / recruitment CLI |
+| MCP tool `search` on `awos-recruitment` | Call `search_capabilities` (that is the real tool name) |
+| Slash `/awos:product` (Claude) | Cursor project command `/awos-product` (flat `.cursor/commands/awos-product.md` — Agent CLI does not scan command subfolders) |
+
+## `AskUserQuestion` → `AskQuestion` (strict)
+
+When an AWOS prompt says to use `AskUserQuestion` for multiple-choice questions:
+
+1. **Call native `AskQuestion`** if it is already listed as a first-class tool this turn (invoke by name, same as `Read` / `Shell`). Prefer one structured questionnaire over chat prose. Do **not** open with a numbered list while native `AskQuestion` is available.
+2. **Never** `CallDynamicTool` with `namespace: cursor` and `toolName: AskQuestion`. The `cursor` namespace is only `CreateGoal`, `GenerateImage`, `UpdateGoal`. Do not `GetDynamicTools`-search for `AskQuestion` and then invent a `CallDynamicTool` call — that yields `Error: Tool "AskQuestion" not found in namespace "cursor"`.
+3. **Prose fallback only if native `AskQuestion` is absent** from this turn's first-class tools (some models / Auto do not inject it). Then ask the same choices as a numbered Markdown list and wait. AWOS skip→default still applies when the user declines.
+4. Never call a tool named `AskUserQuestion` — that name does not exist in Cursor.
+
+## Package runner
+
+Prefer `bunx` for AWOS installers and recruitment CLI; fall back to `npx` when `bun`/`bunx` is unavailable:
+
+```text
+bunx github:AlexanderMakarov/awos
+bunx @provectusinc/awos-recruitment skill|agent|mcp <names...>
+```
+
+## Plugins
+
+Ignore Claude-only `/plugin install …` steps when the equivalent capability is already on disk under `.cursor/skills/` / `.cursor/agents/` / `.claude/skills/` / `.claude/agents/` (installer converts the AWOS plugin via acplugin). Full matrix: see `docs/cursor.md` in the AWOS repository.
+
+## Do not edit Layer A sources
+
+Never hand-edit `.awos/commands/`, `.awos/templates/`, or `.awos/scripts/` — re-running the installer overwrites them. Customize Claude wrappers under `.claude/commands/awos/` (preserve-on-update). Regenerate Cursor wrappers by re-running the installer (or `node .awos/scripts/sync-awos-cursor-commands.cjs`) — do not hand-maintain nested `.cursor/commands/awos/`.

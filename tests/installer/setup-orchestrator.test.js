@@ -1,7 +1,7 @@
 /**
  * Unit tests for src/core/setup-orchestrator.js.
  *
- * Runs the full seven-step pipeline against a fresh temp directory and
+ * Runs the full eight-step pipeline against a fresh temp directory and
  * verifies the resulting tree. Re-running it should be safely idempotent.
  */
 
@@ -37,7 +37,9 @@ after(async () => {
 test('end-to-end setup completes against a fresh temp dir', async () => {
   const workingDir = await freshTemp();
 
-  await silenced(() => runSetup({ workingDir, packageRoot: repoRoot }));
+  await silenced(() =>
+    runSetup({ workingDir, packageRoot: repoRoot, skipCursorPlugin: true })
+  );
 
   // Expected top-level layout — these are the directories declared in
   // src/config/setup-config.js plus the .mcp.json and .claude/settings.json
@@ -49,6 +51,7 @@ test('end-to-end setup completes against a fresh temp dir', async () => {
     '.awos/scripts',
     '.claude',
     '.claude/commands/awos',
+    '.cursor',
     'context',
     'context/product',
     'context/spec',
@@ -83,15 +86,31 @@ test('end-to-end setup completes against a fresh temp dir', async () => {
     '.claude/settings.json should be created by the marketplace configurator'
   );
   assert.ok(
+    exists(path.join(workingDir, '.cursor', 'mcp.json')),
+    '.cursor/mcp.json should be created for Cursor recruitment MCP'
+  );
+  assert.ok(
+    exists(
+      path.join(workingDir, '.cursor', 'rules', 'awos-cursor-runtime.mdc')
+    ),
+    'Cursor runtime tool-map rule must be installed'
+  );
+  assert.ok(
+    exists(path.join(workingDir, '.cursor', 'commands', 'awos-product.md')),
+    'flat Cursor wrapper /awos-product must be generated from .awos/commands'
+  );
+  assert.ok(
     exists(path.join(workingDir, '.awos', '.awos-version')),
-    'the seventh step must leave a version stamp — the self-check has no other source for the installed version'
+    'the final step must leave a version stamp — the self-check has no other source for the installed version'
   );
 });
 
 test('running setup twice is idempotent (no errors, identical layout)', async () => {
   const workingDir = await freshTemp();
 
-  await silenced(() => runSetup({ workingDir, packageRoot: repoRoot }));
+  await silenced(() =>
+    runSetup({ workingDir, packageRoot: repoRoot, skipCursorPlugin: true })
+  );
 
   // Snapshot the file list after the first run.
   function listAllFiles(dir, base = dir) {
@@ -108,7 +127,9 @@ test('running setup twice is idempotent (no errors, identical layout)', async ()
   assert.ok(before.length > 0, 'first run should produce files');
 
   // Second run.
-  await silenced(() => runSetup({ workingDir, packageRoot: repoRoot }));
+  await silenced(() =>
+    runSetup({ workingDir, packageRoot: repoRoot, skipCursorPlugin: true })
+  );
   const after2 = listAllFiles(workingDir);
 
   assert.deepEqual(
@@ -139,6 +160,7 @@ test('setup preserves customized wrappers when promptForOverwrite returns false'
     runSetup({
       workingDir,
       packageRoot: repoRoot,
+      skipCursorPlugin: true,
       promptForOverwrite: async () => {
         promptCallCount++;
         return false;
@@ -178,6 +200,7 @@ test('setup overwrites wrappers when promptForOverwrite returns true', async () 
     runSetup({
       workingDir,
       packageRoot: repoRoot,
+      skipCursorPlugin: true,
       promptForOverwrite: async () => true,
     })
   );
@@ -201,7 +224,12 @@ test('setup dry-run produces zero on-disk files', async () => {
   const workingDir = await freshTemp();
 
   await silenced(() =>
-    runSetup({ workingDir, packageRoot: repoRoot, dryRun: true })
+    runSetup({
+      workingDir,
+      packageRoot: repoRoot,
+      dryRun: true,
+      skipCursorPlugin: true,
+    })
   );
 
   // The directory-creator and MCP/marketplace configurators run in dry-run

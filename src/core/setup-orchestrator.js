@@ -19,6 +19,7 @@ const { configureMcp } = require('../services/mcp-configurator');
 const {
   configureMarketplace,
 } = require('../services/marketplace-configurator');
+const { configureCursorSurfaces } = require('../services/cursor-surfaces');
 const { stampVersion } = require('../services/version-stamper');
 const { runMigrations } = require('../migrations/runner');
 
@@ -28,6 +29,8 @@ const { runMigrations } = require('../migrations/runner');
  * @param {string} config.workingDir - The working directory where setup will be performed
  * @param {string} config.packageRoot - The root directory of the AWOS package
  * @param {boolean} config.dryRun - Run in dry-run mode (preview changes only)
+ * @param {boolean} [config.skipCursorPlugin] - Skip acplugin Layer C (offline tests)
+ * @param {string|null} [config.cursorPluginStaging] - Fixture staging for Layer C
  * @param {Function} [config.promptForOverwrite] - Async callback invoked by
  *   the file-copier for operations declared `preserveOnUpdate: true` when it
  *   finds existing files that would be overwritten. Signature:
@@ -40,9 +43,11 @@ async function runSetup({
   workingDir,
   packageRoot,
   dryRun = false,
+  skipCursorPlugin = false,
+  cursorPluginStaging = null,
   promptForOverwrite,
 }) {
-  const TOTAL_STEPS = 7;
+  const TOTAL_STEPS = 8;
 
   // Display header
   showHeader(AWOS_ASCII, AWOS_SUBTITLE);
@@ -101,7 +106,7 @@ async function runSetup({
     dryRun,
   });
 
-  // Step 5: Configure MCP
+  // Step 5: Configure MCP (Claude .mcp.json)
   showStep(
     'Configuring MCP',
     'Setting up MCP server configuration',
@@ -111,11 +116,31 @@ async function runSetup({
   const mcpStatistics = await configureMcp({ workingDir, dryRun });
   clearLine();
 
-  // Step 6: Register Marketplace
+  // Step 6: Cursor surfaces (rules, .cursor/mcp.json, wrappers, acplugin)
+  showStep(
+    'Configuring Cursor',
+    'Syncing Cursor commands, rules, MCP, and plugin surfaces',
+    6,
+    TOTAL_STEPS
+  );
+  const cursorStatistics = await configureCursorSurfaces({
+    workingDir,
+    packageRoot,
+    dryRun,
+    skipPlugin:
+      skipCursorPlugin ||
+      process.env.AWOS_SKIP_CURSOR_PLUGIN === '1' ||
+      process.env.AWOS_SKIP_CURSOR_PLUGIN === 'true',
+    pluginStaging:
+      cursorPluginStaging || process.env.AWOS_PLUGIN_STAGING || null,
+  });
+  clearLine();
+
+  // Step 7: Register Marketplace
   showStep(
     'Registering Marketplace',
     'Adding AWOS plugin marketplace to settings',
-    6,
+    7,
     TOTAL_STEPS
   );
   const marketplaceStatistics = await configureMarketplace({
@@ -124,14 +149,14 @@ async function runSetup({
   });
   clearLine();
 
-  // Step 7: Stamp the installed version
+  // Step 8: Stamp the installed version
   // Runs last, after migrations, copies, and both configurators: a crash
   // mid-install must never leave behind a stamp claiming a version that
   // was not fully installed.
   showStep(
     'Recording Version',
     'Stamping the installed AWOS version',
-    7,
+    8,
     TOTAL_STEPS
   );
   const versionStatistics = await stampVersion({
@@ -146,6 +171,7 @@ async function runSetup({
     ...directoryStatistics,
     ...fileStatistics,
     ...mcpStatistics,
+    ...cursorStatistics,
     ...marketplaceStatistics,
     ...versionStatistics,
     migrations: migrationStatistics.applied,
