@@ -8,20 +8,24 @@
 
 ### Before You Begin
 
-- **Node.js and npm**: Required only for the installer. The agents themselves do not require Node.js.
-- **Claude Code**: This framework is designed for Claude Code. All examples assume you are using it.
+- **Bun** (preferred) or **Node.js 22+**: Required for the installer. Agents themselves do not require a JS runtime in-session.
+- **Claude Code and/or Cursor**: Core prompts target Claude Code tools; the installer also generates Cursor command wrappers, MCP config, and a runtime tool-map rule. See [docs/cursor.md](docs/cursor.md).
 
-**Note on Token Usage**: `awos` feeds large amounts of project context to the AI. Plan your Claude subscription or AWS Bedrock usage accordingly.
+**Note on Token Usage**: `awos` feeds large amounts of project context to the AI. Plan your subscription usage accordingly.
 
 ### Step 1: Install `awos`
 
 ```sh
-npx @provectusinc/awos
+bunx github:AlexanderMakarov/awos
 ```
 
-This sets up the `.awos/` directory (commands, templates, scripts), the `.claude/commands/awos/` wrappers, and the `context/` directory where your project documents will live. It also registers the AWOS plugin marketplace in your project settings.
+Node alternative: `npx github:AlexanderMakarov/awos`. Local clone: `bun /path/to/awos/index.js`.
 
-> **Running on an existing codebase?** The recommended first step is an AI-readiness audit: install the plugin with `/plugin install awos@awos-marketplace`, then run `/awos:ai-readiness-audit` for a scored assessment with actionable recommendations. From there AWOS integrates seamlessly with brownfield projects — `/awos:product` auto-detects your code and the later foundation commands build on that, so you won't start from a blank slate. See the **[Brownfield Adoption Guide](docs/brownfield-adoption.md)** for the full path.
+This sets up `.awos/` (commands, templates, scripts), Claude wrappers under `.claude/commands/awos/`, Cursor wrappers under `.cursor/commands/`, dual recruitment MCP (`.mcp.json` + `.cursor/mcp.json`), and `context/`. It also registers the AWOS plugin marketplace for Claude Code and converts the AWOS plugin into `.cursor/` via `@disdjj/acplugin` when `bunx`/`npx` is available.
+
+> **Upstream package:** `npx @provectusinc/awos` installs Provectus’s line, not this repository.
+
+> **Running on an existing codebase?** The recommended first step is an AI-readiness audit: in Claude Code install the plugin with `/plugin install awos@awos-marketplace`, then run `/awos:ai-readiness-audit`. On Cursor, after install use `/awos-flow` / skills under `.cursor/skills/awos-*` as generated. From there `/awos:product` (Claude) or `/awos-product` (Cursor) auto-detects brownfield code. See the **[Brownfield Adoption Guide](docs/brownfield-adoption.md)** and **[Cursor guide](docs/cursor.md)**.
 
 ### Step 2: Foundation Setup
 

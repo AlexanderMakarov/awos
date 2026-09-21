@@ -73,7 +73,9 @@ for (const name of fixtures) {
       await copyTree(beforeDir, workingDir);
     }
 
-    await silenced(() => runSetup({ workingDir, packageRoot: repoRoot }));
+    await silenced(() =>
+      runSetup({ workingDir, packageRoot: repoRoot, skipCursorPlugin: true })
+    );
 
     assertManifest({
       manifest,

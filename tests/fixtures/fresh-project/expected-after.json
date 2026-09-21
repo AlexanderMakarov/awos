@@ -15,6 +15,19 @@
   },
   ".claude/settings.json": { "exists": true, "contains": "awos-marketplace" },
   ".mcp.json": { "exists": true, "contains": "awos-recruitment" },
+  ".cursor/mcp.json": { "exists": true, "contains": "awos-recruitment" },
+  ".cursor/rules/awos-cursor-runtime.mdc": {
+    "exists": true,
+    "contains": "AskQuestion"
+  },
+  ".cursor/commands/awos-product.md": {
+    "exists": true,
+    "contains": ".awos/commands/product.md"
+  },
+  ".cursor/commands/awos-hire.md": {
+    "exists": true,
+    "contains": "search_capabilities"
+  },
   "context/product": { "exists": true },
   "context/spec": { "exists": true }
 }

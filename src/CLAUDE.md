@@ -56,6 +56,8 @@ From `config/setup-config.js`:
 | `scripts/`         | `.awos/scripts/`         | no               |
 | `claude/commands/` | `.claude/commands/awos/` | **yes**          |
 
+After copy, the orchestrator runs **Cursor sync** (not a copy-table row): `.cursor/rules/`, flat `.cursor/commands/awos-*.md`, `.cursor/mcp.json`, and (via `@disdjj/acplugin`) prefixed plugin surfaces under `.cursor/{commands,skills,agents}/`. See `docs/cursor.md` and `scripts/lib/cursor-surfaces.cjs`.
+
 `.claude/agents/` is intentionally **not** a copy destination — it is the user's customization area for project-local subagents. AWOS-shipped agents (e.g. `testing-expert`) ride in via `awos-recruitment` on demand, so the installer never auto-populates this directory.
 
 **Why the difference?**

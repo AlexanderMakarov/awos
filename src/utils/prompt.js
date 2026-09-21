@@ -66,14 +66,12 @@ function createDefaultOverwritePrompt({
         ' as your customization layer. They are the place to\n'
     );
     output.write(
-      '  customize Claude Code commands, and the installer no longer\n'
+      '  customize Claude Code slash commands; the installer no longer\n'
     );
     output.write(
-      '  clobbers them on update (the framework now targets Claude Code\n'
+      '  clobbers them on update. Cursor wrappers under .cursor/commands/\n'
     );
-    output.write(
-      '  exclusively, so the wrappers can be hand-edited safely).\n'
-    );
+    output.write('  are regenerated from .awos/commands/ on each install.\n');
     output.write('\n');
     output.write('  The following file(s) would be overwritten:\n');
     for (const f of files) {

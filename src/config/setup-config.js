@@ -12,6 +12,10 @@ const directories = [
     description: 'Claude configuration directory',
   },
   {
+    path: '.cursor',
+    description: 'Cursor configuration directory',
+  },
+  {
     path: '.awos',
     description: 'awos configuration directory',
   },
@@ -64,8 +68,11 @@ const copyOperations = [
     // installs and never-before-seen wrappers are unaffected.
     preserveOnUpdate: true,
     manualUpdateUrl:
-      'https://github.com/provectus/awos/tree/main/claude/commands',
+      'https://github.com/AlexanderMakarov/awos/tree/main/claude/commands',
   },
+  // cursor/rules are synced by configureCursorSurfaces (overwrite each
+  // install) rather than preserveOnUpdate copy — they are framework-owned
+  // tool-mapping, not a user customization layer.
   // Note: `.claude/agents/` is intentionally NOT a copy destination. It is the
   // user's customization area (project-local subagents). AWOS-shipped agents
   // (e.g. `testing-expert`) are hired on demand via `awos-recruitment`, so the
